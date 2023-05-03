@@ -56,14 +56,10 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
       IMG_KAFKA_TOPIC: img-topic
-      S3_BUCKET-NAME: test-bucket
-      # value are stored in application-dev.yml, because retrieraval from ENV variables is not supported
-      S3_ACCESS-KEY-ID-PATH: aws_access_key_id
-      S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
-      S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
+      DECISION_KAFKA_TOPIC: decision-topic
+
     expose:
-      - 8081 
-      - 8082
+      - 8080
 
   image-producer:
     # First execute ./gradlew.bat bootJar get a fresh copy
@@ -80,8 +76,6 @@ services:
       SPRING_KAFKA_TEMPLATE_DEFAULT-TOPIC: img-topic
     expose:
       - 8080
-      - 8081 
-      - 8082
     ports:
       - "8080:8080"
 
@@ -98,6 +92,18 @@ services:
       S3_ACCESS-KEY-ID-PATH: aws_access_key_id
       S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
       S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
+
+  descion-consumer:
+    build:
+      context: ./descion-consumer
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      DECISION_KAFKA_TOPIC: decision-topic
+
+
+
 
   mock-aws-s3:
   # Fork and modify code on https://github.com/scireum/s3ninja
