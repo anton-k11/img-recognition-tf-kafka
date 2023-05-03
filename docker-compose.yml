@@ -38,7 +38,7 @@ services:
 
       echo -e 'Creating kafka topics'
       kafka-topics --bootstrap-server kafka-broker:29092 --create --if-not-exists --topic img-topic --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka-broker:29092 --create --if-not-exists --topic ml-res-topic --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka-broker:29092 --create --if-not-exists --topic decision-topic --replication-factor 1 --partitions 1
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka-broker:29092 --list
@@ -87,6 +87,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
       IMG_KAFKA_TOPIC: img-topic
+      DECISION_KAFKA_TOPIC: decision-topic
       S3_BUCKET-NAME: test-bucket
       # value are stored in application-dev.yml, because retrieraval from ENV variables is not supported
       S3_ACCESS-KEY-ID-PATH: aws_access_key_id
