@@ -66,14 +66,11 @@ services:
     build: 
       context: ./image-producer
       dockerfile: Dockerfile
-      args:  
-        DOCKER_REGISTRY: openshift-image-registry.apps.internal.appcanvas.net
-    entrypoint: python3 produce_img.py
     depends_on:
       - init-kafka-broker
     environment:
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
-      SPRING_KAFKA_TEMPLATE_DEFAULT-TOPIC: img-topic
+      KAFKA_BOOTSTRAP_SERVERS: kafka-broker:29092
+      IMG_KAFKA_TOPIC: img-topic
     expose:
       - 8080
     ports:
