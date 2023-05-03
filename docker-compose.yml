@@ -47,7 +47,7 @@ services:
   tf-img-recognition:
     # First execute ./gradlew.bat bootJar get a fresh copy
     build: 
-      context: ./tf-img-recognition    
+      context: ./ml-img-recognition    
       dockerfile: Dockerfile
     entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
     depends_on:
