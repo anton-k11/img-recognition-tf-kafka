@@ -1,0 +1,117 @@
+---
+version: '3'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka-broker:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka-broker
+    ports:
+    # To learn about configuring Kafka for access across networks see
+    # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka-broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  init-kafka-broker:
+    image: confluentinc/cp-kafka:7.0.1
+    depends_on:
+      - kafka-broker
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka-broker:29092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka-broker:29092 --create --if-not-exists --topic img-topic --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka-broker:29092 --create --if-not-exists --topic decision-topic --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka-broker:29092 --list
+      "
+
+  tf-img-recognition:
+    # First execute ./gradlew.bat bootJar get a fresh copy
+    build: 
+      context: ./ml-img-recognition    
+      dockerfile: Dockerfile
+    entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
+    depends_on:
+      - init-kafka-broker
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      IMG_KAFKA_TOPIC: img-topic
+      DECISION_KAFKA_TOPIC: decision-topic
+
+    expose:
+      - 8080
+
+  image-producer:
+    # First execute ./gradlew.bat bootJar get a fresh copy
+    build: 
+      context: ./image-producer
+      dockerfile: Dockerfile
+      args:  
+        DOCKER_REGISTRY: openshift-image-registry.apps.internal.appcanvas.net
+    entrypoint: python3 produce_img.py
+    depends_on:
+      - init-kafka-broker
+    environment:
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      SPRING_KAFKA_TEMPLATE_DEFAULT-TOPIC: img-topic
+    expose:
+      - 8080
+    ports:
+      - "8080:8080"
+
+  image-descion-uploader:
+    build: 
+      context: ./image-ml-descion-uploader    
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      IMG_KAFKA_TOPIC: img-topic
+      DECISION_KAFKA_TOPIC: decision-topic
+      S3_BUCKET-NAME: test-bucket
+      # value are stored in application-dev.yml, because retrieraval from ENV variables is not supported
+      S3_ACCESS-KEY-ID-PATH: aws_access_key_id
+      S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
+      S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
+
+  descion-consumer:
+    build:
+      context: ./descion-consumer
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      DECISION_KAFKA_TOPIC: decision-topic
+
+
+
+
+  mock-aws-s3:
+  # Fork and modify code on https://github.com/scireum/s3ninja
+    image: scireum/s3-ninja:latest
+    expose:
+      - 9000
+    ports:
+      - "9444:9000"
+      
+
