@@ -1,5 +1,7 @@
 FROM python:3.12.0a7-bullseye
 
+RUN apt-get update && apt-get install -y --no-install-recommends
+
 # Set working directory
 WORKDIR /app
 
