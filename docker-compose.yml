@@ -28,6 +28,7 @@ services:
 
   init-kafka-broker:
     image: confluentinc/cp-kafka:7.0.1
+    container_name: init-kafka-broker
     depends_on:
       - kafka-broker
     entrypoint: [ '/bin/sh', '-c' ]
@@ -49,6 +50,7 @@ services:
     build: 
       context: ./ml-img-recognition    
       dockerfile: Dockerfile
+    container_name: tf-img-recognition
     entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
     depends_on:
       - init-kafka-broker
@@ -57,32 +59,35 @@ services:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
-
     expose:
       - 8080
 
   image-producer:
-    # First execute ./gradlew.bat bootJar get a fresh copy
     build: 
       context: ./image-producer
       dockerfile: Dockerfile
-      args:  
-        DOCKER_REGISTRY: openshift-image-registry.apps.internal.appcanvas.net
-    entrypoint: python3 produce_img.py
+    container_name: image-producer
     depends_on:
       - init-kafka-broker
     environment:
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
-      SPRING_KAFKA_TEMPLATE_DEFAULT-TOPIC: img-topic
+      KAFKA_BOOTSTRAP_SERVERS: kafka-broker:29092
+      IMG_KAFKA_TOPIC: img-topic
+      IMG_DIRECTORY: /pictures
     expose:
       - 8080
     ports:
       - "8080:8080"
+    volumes:
+        - /home/pictures:/pictures
 
   image-descion-uploader:
     build: 
       context: ./image-ml-descion-uploader    
       dockerfile: Dockerfile
+    container_name: image-decision-uploader
+    depends_on:
+      - init-kafka-broker
+      - mock-aws-s3
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
@@ -98,17 +103,18 @@ services:
     build:
       context: ./descion-consumer
       dockerfile: Dockerfile
+    container_name: decision-consumer
+    depends_on:
+      - init-kafka-broker
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
       DECISION_KAFKA_TOPIC: decision-topic
 
-
-
-
   mock-aws-s3:
   # Fork and modify code on https://github.com/scireum/s3ninja
     image: scireum/s3-ninja:latest
+    container_name: mock-aws-s3
     expose:
       - 9000
     ports:
