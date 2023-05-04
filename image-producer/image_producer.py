@@ -6,14 +6,12 @@ from kafka.errors import KafkaError
 from PIL import Image
 
 # Read environment variables
+img_dir = os.getenv('IMG_DIRECTORY', '/home/pictures/')
 img_topic = os.getenv('IMG_KAFKA_TOPIC', 'image-topic')
 bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
 
 # Set up Kafka producer
 producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
-
-# Set up image directory
-img_dir = 'path/to/image/folder/'
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -45,6 +43,8 @@ def send_image(filename):
 
 # Set up main function
 def main():
+    logging.info(f'Reading images from directory: {img_dir}')
+
     # Log bootstrap servers and image topic
     logging.info(f'Using Kafka bootstrap servers: {bootstrap_servers}')
     logging.info(f'Sending images to Kafka topic: {img_topic}')

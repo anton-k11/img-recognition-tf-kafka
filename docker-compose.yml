@@ -57,7 +57,6 @@ services:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
-
     expose:
       - 8080
 
@@ -71,10 +70,13 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-broker:29092
       IMG_KAFKA_TOPIC: img-topic
+      IMG_DIRECTORY: /pictures
     expose:
       - 8080
     ports:
       - "8080:8080"
+    volumes:
+        - /home/pictures:/pictures
 
   image-descion-uploader:
     build: 
