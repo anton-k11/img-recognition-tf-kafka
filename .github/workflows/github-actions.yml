@@ -19,6 +19,9 @@ jobs:
         run: |
           if [ -f docker-compose.yml ]; then
             docker compose build
+            docker compose up -d kafka-broker1
+            docker compose up -d init-kafka-broker
+            sleep 5
             docker compose up -d image-producer
           else
             "No docker-compose.yml found"
