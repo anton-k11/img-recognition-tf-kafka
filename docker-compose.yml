@@ -3,22 +3,26 @@ version: '3'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.2
-    container_name: zookeeper
+    deploy:
+      replicas: 2
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka-broker:
     image: confluentinc/cp-kafka:7.3.2
-    container_name: kafka-broker
-    ports:
-    # To learn about configuring Kafka for access across networks see
-    # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
-      - "9092:9092"
+    deploy:
+      replicas: 2
+    expose:
+      - 9092
+#    ports:
+#    # To learn about configuring Kafka for access across networks see
+#    # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+#      - "9092:9092"
     depends_on:
       - zookeeper
     environment:
-      KAFKA_BROKER_ID: 1
+      #KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka-broker:29092
@@ -70,7 +74,7 @@ services:
     depends_on:
       - init-kafka-broker
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka-broker:29092
+      KAFKA_BOOTSTRAP_SERVERS: img-recognition-tf-kafka-kafka-broker-1:29092,img-recognition-tf-kafka-kafka-broker-2:29092
       IMG_KAFKA_TOPIC: img-topic
       IMG_DIRECTORY: /pictures
     expose:
@@ -80,9 +84,9 @@ services:
     volumes:
         - /home/pictures:/pictures
 
-  image-descion-uploader:
+  image-decision-uploader:
     build: 
-      context: ./image-ml-descion-uploader    
+      context: ./image-ml-decision-uploader    
       dockerfile: Dockerfile
     container_name: image-decision-uploader
     depends_on:
@@ -99,9 +103,9 @@ services:
       S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
       S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
 
-  descion-consumer:
+  decision-consumer:
     build:
-      context: ./descion-consumer
+      context: ./decision-consumer
       dockerfile: Dockerfile
     container_name: decision-consumer
     depends_on:
