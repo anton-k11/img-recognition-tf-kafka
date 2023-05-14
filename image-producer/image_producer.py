@@ -8,6 +8,7 @@ from PIL import Image
 # Read environment variables
 img_dir = os.getenv('IMG_DIRECTORY', '/home/pictures/')
 img_topic = os.getenv('IMG_KAFKA_TOPIC', 'image-topic')
+producer_id = os.getenv('HOSTNAME')
 bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
 
 # Set up Kafka producer
@@ -29,13 +30,14 @@ def send_image(filename):
         timestamp = int(time.time() * 1000)  # Current timestamp in milliseconds
         message = img_bytes
         headers = [
-            ('timestamp', str(timestamp).encode('utf-8'))
+            ('timestamp', str(timestamp).encode('utf-8')),
+            ('producer_id', str(producer_id).encode('utf-8'))
         ]
 
         # Send message to Kafka topic with headers
         producer.send(img_topic, value=message, headers=headers)
 
-        logging.info(f'Sent image {filename} to Kafka topic {img_topic}.')
+        logging.info(f'Sent image {filename} to Kafka topic {img_topic}, with {headers}.')
     except KafkaError as e:
         logging.error(f'Error sending image {filename} to Kafka topic {img_topic}: {e}')
     except Exception as e:

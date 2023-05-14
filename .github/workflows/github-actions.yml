@@ -11,8 +11,28 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Run tests
+        run: |
+          docker compose build
+          docker compose up -d kafka-broker1
+          docker compose up -d init-kafka-broker
+          sleep 5
+          docker compose up -d image-producer
+          sleep 5
+
+      - name: Stop docker containers
+        run: docker compose stop
+
+      - name: Dump docker containers' logs
+        run: |
+          docker compose logs > compose.log
+          docker compose down
+      - name: Store logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: compose.log
+          path: compose.log
