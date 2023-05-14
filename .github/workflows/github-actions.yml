@@ -17,16 +17,22 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - name: Run tests
         run: |
-          if [ -f docker-compose.yml ]; then
-            docker compose build
-            docker compose up -d kafka-broker1
-            docker compose up -d init-kafka-broker
-            sleep 5
-            docker compose up -d image-producer
-          else
-            "No docker-compose.yml found"
-          fi
-      - name: Dump producer logs
-        run: docker compose logs image-producer
-      - name: Stop docker images
-        run: docker compose down
+          docker compose build
+          docker compose up -d kafka-broker1
+          docker compose up -d init-kafka-broker
+          sleep 5
+          docker compose up -d image-producer
+          sleep 5
+
+      - name: Stop docker containers
+        run: docker compose stop
+
+      - name: Dump docker containers' logs
+        run: |
+          docker compose logs > compose.log
+          docker compose down
+      - name: Store logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: compose.log
+          path: compose.log
