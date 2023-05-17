@@ -5,6 +5,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'img.recognition.tf.kafka.java-application-conventions'
     id 'org.springframework.boot' version "${springBootVersion}"
 }
 
