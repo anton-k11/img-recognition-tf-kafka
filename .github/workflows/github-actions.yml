@@ -34,9 +34,15 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Get artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ml-img-recognition.jar
+          path: ml-img-recognition/build/libs/ml-img-recognition.jar
+
       - name: List files in the repository
         run: |
-          ls ${{ github.workspace }}
+          find ${{ github.workspace }}/ml-img-recognition
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - name: Run tests
         run: |
