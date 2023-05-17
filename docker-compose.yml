@@ -34,8 +34,8 @@ services:
     depends_on:
       - init-kafka-broker
     environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: ${BOOTSTRAP_SERVERS}
+      #SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
     expose:

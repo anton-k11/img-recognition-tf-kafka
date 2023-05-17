@@ -70,7 +70,7 @@ services:
     container_name: init-kafka-broker
     depends_on:
       - kafka-broker1
- #     - kafka-broker2
+      - kafka-broker2
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
@@ -81,6 +81,20 @@ services:
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic img-topic --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic decision-topic --replication-factor 1 --partitions 1
 
+      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep img-topic || exit 1
+      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep decision-topic || exit 2
+
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka-broker2:29092 --list
       "
+    healthcheck:
+      test: |
+        "
+        kafka-topics --bootstrap-server ${KAFKA1}:29092 --list \
+        kafka-topics --bootstrap-server ${KAFKA2}:29092 --list
+        "
+      interval: 1s
+      timeout: 1s
+      retries: 3
+      start_period: 3s
+

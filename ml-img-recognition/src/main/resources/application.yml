@@ -1,0 +1,9 @@
+spring:
+  application.name: ml-img-recognition
+  kafka:
+    bootstrap-servers: localhost:9092
+    streams:
+      application-id: ml-img-recognition
+
+img.kafka.topic: img-topic
+decision.kafka.topic: decision-topic
