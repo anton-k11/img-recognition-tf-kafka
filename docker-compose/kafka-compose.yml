@@ -6,6 +6,15 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
+  kafka-cmak:
+    image: ghcr.io/eshepelyuk/dckr/cmak-3.0.0.5:latest
+    ports:
+      - "9000:9000"
+    depends_on:
+      - zookeeper
+    environment:
+      ZK_HOSTS: "zookeeper:2181"
+
   kafka-broker1:
     image: confluentinc/cp-kafka:7.3.2
     container_name: ${KAFKA1}
@@ -26,6 +35,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      KAFKA_MESSAGE_MAX_BYTES: 41943040
+      KAFKA_MAX_REQUEST_SIZE: 41943040
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 41943040
+      KAFKA_FETCH_MESSAGE_MAX_BYTES: 41943040
 
   kafka-broker2:
     image: confluentinc/cp-kafka:7.3.2
@@ -45,9 +59,14 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      KAFKA_MESSAGE_MAX_BYTES: 41943040
+      KAFKA_MAX_REQUEST_SIZE: 41943040
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 41943040
+      KAFKA_FETCH_MESSAGE_MAX_BYTES: 41943040
 
   init-kafka-broker:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.3.2
     container_name: init-kafka-broker
     depends_on:
       - kafka-broker1
@@ -62,7 +81,20 @@ services:
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic img-topic --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic decision-topic --replication-factor 1 --partitions 1
 
+      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep img-topic || exit 1
+      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep decision-topic || exit 2
+
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka-broker2:29092 --list
       "
+    healthcheck:
+      test: |
+        "
+        kafka-topics --bootstrap-server ${KAFKA1}:29092 --list \
+        kafka-topics --bootstrap-server ${KAFKA2}:29092 --list
+        "
+      interval: 1s
+      timeout: 1s
+      retries: 3
+      start_period: 3s
 

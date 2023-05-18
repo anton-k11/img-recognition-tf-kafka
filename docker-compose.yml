@@ -4,6 +4,11 @@ services:
       file: docker-compose/kafka-compose.yml
       service: zookeeper
 
+  kafka-cmak:
+    extends:
+      file: docker-compose/kafka-compose.yml
+      service: kafka-cmak
+
   kafka-broker1:
     extends:
       file: docker-compose/kafka-compose.yml
@@ -25,12 +30,12 @@ services:
       context: ./ml-img-recognition    
       dockerfile: Dockerfile
     container_name: tf-img-recognition
-    entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
+    #entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
     depends_on:
       - init-kafka-broker
     environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      #SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
     expose:
@@ -41,7 +46,7 @@ services:
       context: ./image-producer
       dockerfile: Dockerfile
     deploy:
-      replicas: 3
+      replicas: 1
     depends_on:
       - init-kafka-broker
     environment:
@@ -61,7 +66,7 @@ services:
       - mock-aws-s3
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: ${BOOTSTRAP_SERVERS}
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
       S3_BUCKET-NAME: test-bucket
@@ -78,8 +83,7 @@ services:
     depends_on:
       - init-kafka-broker
     environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka-broker:29092
+      KAFKA_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       DECISION_KAFKA_TOPIC: decision-topic
 
   mock-aws-s3:
