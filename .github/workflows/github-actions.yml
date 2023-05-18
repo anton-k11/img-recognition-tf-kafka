@@ -16,6 +16,10 @@ jobs:
       uses: gradle/gradle-build-action@v2
     - name: Run build with Gradle Wrapper
       run: ./gradlew build
+    - name: Fetch ML model
+      run: ./gradlew :ml-img-recognition:fetchInceptionFrozenModel
+    - name: Build Spring Boot jar with ML model
+      run: ./gradlew :ml-img-recognition:bootJar
 
     - name: Store artifacts
       uses: actions/upload-artifact@v3
