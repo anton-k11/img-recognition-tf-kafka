@@ -1,5 +1,9 @@
 package img.recognition.ml.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import img.recognition.ml.tf.ClassifyImageService;
+import img.recognition.ml.tf.ClassifyImageService.LabelWithProbability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -15,7 +19,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ImgJsonKafkaStream {
 
+    private final ClassifyImageService classifyImageService;
     private final KafkaStreamConfig config;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     public void kafkaStreams(StreamsBuilder streamsBuilder) {
@@ -31,7 +37,12 @@ public class ImgJsonKafkaStream {
                 value -> {
                     log.info("Message with length {} consumed", value.length);
                     // Replace this with your transformation logic
-                    String json = transformImageToJson(value);
+                    String json = null;
+                    try {
+                        json = transformImageToJson(value);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
 
                     // Return the new key-value pair with preserved headers
                     return json;
@@ -44,9 +55,12 @@ public class ImgJsonKafkaStream {
     }
 
     // Replace this with your own image-to-JSON transformation logic
-    private String transformImageToJson(byte[] image) {
-        // TODO: Implement image-to-JSON transformation
-        return "{\"juice\":58, \"jam\": 42}";
+    private String transformImageToJson(byte[] image) throws JsonProcessingException {
+        LabelWithProbability labelWithProbability = classifyImageService.classifyImage(image);
+
+        String json = mapper.writeValueAsString(labelWithProbability);
+        log.info("Classified {}", json);
+        return json;
     }
 
 

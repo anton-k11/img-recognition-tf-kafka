@@ -3,7 +3,7 @@ import time
 import logging
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
-from PIL import Image
+from pathlib import Path
 
 # Read environment variables
 img_dir = os.getenv('IMG_DIRECTORY', '/home/pictures/')
@@ -27,31 +27,28 @@ i=0
 # Set up function to read and send images
 def send_image(filename):
     try:
-        # Read image
-        img = Image.open(os.path.join(img_dir, filename))
+        with open(filename, 'rb') as file:
+            file_bytes = file.read()
 
-        # Convert image to bytes
-        message = img.tobytes()
+            # Create Kafka message with image bytes and header
+            timestamp = int(time.time() * 1000)  # Current timestamp in milliseconds
+            headers = [
+                ('timestamp', str(timestamp).encode('utf-8')),
+                ('producer_id', str(producer_id).encode('utf-8'))
+            ]
 
-        # Create Kafka message with image bytes and header
-        timestamp = int(time.time() * 1000)  # Current timestamp in milliseconds
-        headers = [
-            ('timestamp', str(timestamp).encode('utf-8')),
-            ('producer_id', str(producer_id).encode('utf-8'))
-        ]
+            global i
+            i=i+1
+            key = str(f'a{i}').encode('utf-8')
+            # Send message to Kafka topic with headers
+            metadata_future = producer.send(img_topic, 
+                                            key=key,
+                                            value=file_bytes,
+                                            headers=headers
+                                            )
+            metadata = metadata_future.get(timeout=10)
 
-        global i
-        i=i+1
-        key = str(f'a{i}').encode('utf-8')
-        # Send message to Kafka topic with headers
-        metadata_future = producer.send(img_topic, 
-                                        key=key,
-                                        value=message,
-                                        headers=headers
-                                        )
-        metadata = metadata_future.get(timeout=10)
-
-        logging.info(f'Sent image {filename} to Kafka topic {img_topic}, with {headers}. with {metadata}')
+            logging.info(f'Sent image {filename} to Kafka topic {img_topic}, with {headers}. with {metadata}')
     except KafkaError as e:
         logging.error(f'Error sending image {filename} to Kafka topic {img_topic}: {e}')
     except Exception as e:
@@ -69,7 +66,7 @@ def main():
         # Loop through images in directory and send them to Kafka topic
         for filename in os.listdir(img_dir):
             if filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png'):
-                send_image(filename)
+                send_image(Path(img_dir)/filename)
                 time.sleep(1)  # Pause for 1 second between each image
         producer.flush()
 
