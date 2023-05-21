@@ -35,6 +35,10 @@ def consume_decision():
             # Log JSON and headers on a single line
             log_message = f'Payload: {data} - Headers: {headers}'
             logging.info(log_message)
+            
+            timestamp = int(time.time() * 1000)  # Current timestamp in milliseconds
+            start_timestamp = int(headers.get("timestamp").decode("utf-8") )
+            logging.info(f'Deliverd in {timestamp - start_timestamp}')
 
         except Exception as e:
             logging.error(f'Error processing message: {e}')

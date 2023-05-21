@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
-# Install necessary dependencies
-RUN apt-get update && apt-get install -y \
+# Install necessary dependencies apt-get update &&
+RUN apt-get update && apt-get upgrade && apt-get install -y \
     openjdk-17-jre-headless
 
 # Set the working directory inside the container
