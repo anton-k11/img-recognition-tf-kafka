@@ -40,13 +40,21 @@ services:
       DECISION_KAFKA_TOPIC: decision-topic
     expose:
       - 8080
+    # GPU runtime requires nvidia driver and nvidia-container-runtime to be installed and configured on the host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   image-producer:
     build: 
       context: ./image-producer
       dockerfile: Dockerfile
     deploy:
-      replicas: 1
+      replicas: 2
     depends_on:
       - init-kafka-broker
     environment:
@@ -54,7 +62,7 @@ services:
       IMG_KAFKA_TOPIC: img-topic
       IMG_DIRECTORY: /pictures
     volumes:
-        - /home/pictures:/pictures
+        - /home/pictures:/pictures:ro
 
   image-decision-uploader:
     build: 
