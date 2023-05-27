@@ -1,7 +1,0 @@
-{"@timestamp":"2023-05-15T09:20:22.866Z","@version":"1","message":"3"}
-{"@timestamp":"2023-05-15T09:21:45.882Z","@version":"1","message":"3"}
-{"@timestamp":"2023-05-15T09:22:34.883Z","@version":"1","message":"5"}
-{"@timestamp":"2023-05-15T09:23:25.937Z","@version":"1","message":"7"}
-{"@timestamp":"2023-05-15T09:24:15.937Z","@version":"1","message":"9"}
-{"@timestamp":"2023-05-15T09:25:34.937Z","@version":"1","message":"11"}
-{"@timestamp":"2023-05-15T09:26:50.964Z","@version":"1","message":"15"} 

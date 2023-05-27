@@ -78,8 +78,13 @@ services:
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --list
 
       echo -e 'Creating kafka topics'
-      kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic img-topic --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic decision-topic --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic img-topic \\
+                  --replication-factor 1 --partitions ${REPLICAS} \\
+                  --config retention.ms=2000
+      # keep 100MB of messages for this topic
+      kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic decision-topic \\
+                  --replication-factor 2 --partitions ${REPLICAS} \\
+                  --config retention.bytes=100000000
 
       kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep img-topic || exit 1
       kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep decision-topic || exit 2

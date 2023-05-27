@@ -1,0 +1,29 @@
+services:
+  image-decision-uploader:
+    build: 
+      context: ./image-ml-decision-uploader    
+      dockerfile: Dockerfile
+    container_name: image-decision-uploader
+    depends_on:
+      - init-kafka-broker
+      - mock-aws-s3
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: ${BOOTSTRAP_SERVERS}
+      IMG_KAFKA_TOPIC: img-topic
+      DECISION_KAFKA_TOPIC: decision-topic
+      S3_BUCKET-NAME: test-bucket
+      # value are stored in application-dev.yml, because retrieraval from ENV variables is not supported
+      S3_ACCESS-KEY-ID-PATH: aws_access_key_id
+      S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
+      S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
+
+  mock-aws-s3:
+  # Fork and modify code on https://github.com/scireum/s3ninja
+    image: scireum/s3-ninja:latest
+    container_name: mock-aws-s3
+    expose:
+      - 9000
+    ports:
+      - "9444:9000"
+      

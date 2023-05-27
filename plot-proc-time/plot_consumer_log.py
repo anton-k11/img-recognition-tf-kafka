@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import re
 import logging
 import matplotlib.pyplot as plt
@@ -44,8 +45,12 @@ date_form = DateFormatter("%H:%M:%S")
 ax.plot(x, y)
 ax.xaxis.set_major_formatter(date_form)
 ax.fill_between(x, y)
-ax.set_ylim(ymin=0)
+ax.set_ylim(ymin=150, ymax=325)
+ax.set_xlim(datetime.now() - timedelta(hours=3, minutes=10))
 plt.title("Time Taken by Process")
 plt.xlabel("Timestamp")
 plt.ylabel("Milliseconds")
+mng = plt.get_current_fig_manager()
+mng.resize(*mng.window.maxsize())
+#mng.window.state('withdrawn')
 plt.show()
