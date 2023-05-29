@@ -83,23 +83,20 @@ services:
                   --config retention.ms=2000
       # keep 100MB of messages for this topic
       kafka-topics --bootstrap-server ${KAFKA1}:29092 --create --if-not-exists --topic decision-topic \\
-                  --replication-factor 2 --partitions ${REPLICAS} \\
+                  --replication-factor 1 --partitions ${REPLICAS} \\
                   --config retention.bytes=100000000
 
-      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep img-topic || exit 1
-      kafka-topics --bootstrap-server kafka-broker1:29092 --list | grep decision-topic || exit 2
+      kafka-topics --bootstrap-server ${KAFKA2}:29092 --list | grep img-topic || exit 1
+      kafka-topics --bootstrap-server ${KAFKA2}:29092 --list | grep decision-topic || exit 2
 
       echo -e 'Successfully created the following topics:'
-      kafka-topics --bootstrap-server kafka-broker2:29092 --list
+      kafka-topics --bootstrap-server ${KAFKA2}:29092 --list
+      sleep 2147483647
       "
     healthcheck:
-      test: |
-        "
-        kafka-topics --bootstrap-server ${KAFKA1}:29092 --list \
-        kafka-topics --bootstrap-server ${KAFKA2}:29092 --list
-        "
+      test: kafka-topics --bootstrap-server ${KAFKA1}:29092 --list
       interval: 1s
       timeout: 1s
-      retries: 3
-      start_period: 3s
+      retries: 5
+      start_period: 5s
 
