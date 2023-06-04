@@ -68,7 +68,7 @@ def main():
             if filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png'):
                 send_image(Path(img_dir)/filename)
                 producer.flush()
-                time.sleep(0.5)  # Pause for 1 second between each image
+                time.sleep(0.5)  # Pause for 500 milliseconds between each image
 
     # Close Kafka producer
     producer.close()
