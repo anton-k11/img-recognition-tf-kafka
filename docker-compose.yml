@@ -26,9 +26,14 @@ services:
 
   tf-img-recognition:
     # First execute ./gradlew.bat bootJar get a fresh copy
-    build: 
-      context: ./ml-img-recognition    
+    build:
+      context: ./ml-img-recognition
       dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ubuntu:20.04
+        # For GPU implementation nvidia driver must be installed on the host and
+        # nvidia-container-runtime should be installed and configured properly
+        # BASE_IMAGE: nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
     container_name: tf-img-recognition
     #entrypoint: java -Xms256m -Xmx512m -XX:ParallelGCThreads=2 -jar myapp.jar
     depends_on:
@@ -38,10 +43,9 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       IMG_KAFKA_TOPIC: img-topic
       DECISION_KAFKA_TOPIC: decision-topic
-    expose:
-      - 8080
     # GPU runtime requires nvidia driver and nvidia-container-runtime to be installed and configured on the host
     deploy:
+      replicas: ${REPLICAS}
       resources:
         reservations:
           devices:
@@ -54,7 +58,7 @@ services:
       context: ./image-producer
       dockerfile: Dockerfile
     deploy:
-      replicas: 2
+      replicas: ${REPLICAS}
     depends_on:
       - init-kafka-broker
     environment:
@@ -64,43 +68,16 @@ services:
     volumes:
         - /home/pictures:/pictures:ro
 
-  image-decision-uploader:
-    build: 
-      context: ./image-ml-decision-uploader    
-      dockerfile: Dockerfile
-    container_name: image-decision-uploader
-    depends_on:
-      - init-kafka-broker
-      - mock-aws-s3
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_KAFKA_BOOTSTRAP-SERVERS: ${BOOTSTRAP_SERVERS}
-      IMG_KAFKA_TOPIC: img-topic
-      DECISION_KAFKA_TOPIC: decision-topic
-      S3_BUCKET-NAME: test-bucket
-      # value are stored in application-dev.yml, because retrieraval from ENV variables is not supported
-      S3_ACCESS-KEY-ID-PATH: aws_access_key_id
-      S3_SECRET-ACCESS-KEY-PATH: aws_secret_access_key
-      S3_ENDPOINT-OVERRIDE: http://mock-aws-s3:9000
-
   decision-consumer:
     build:
       context: ./decision-consumer
       dockerfile: Dockerfile
-    container_name: decision-consumer
+    # container_name: decision-consumer
+    deploy:
+      replicas: ${REPLICAS}
     depends_on:
       - init-kafka-broker
     environment:
       KAFKA_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       DECISION_KAFKA_TOPIC: decision-topic
-
-  mock-aws-s3:
-  # Fork and modify code on https://github.com/scireum/s3ninja
-    image: scireum/s3-ninja:latest
-    container_name: mock-aws-s3
-    expose:
-      - 9000
-    ports:
-      - "9444:9000"
-      
 

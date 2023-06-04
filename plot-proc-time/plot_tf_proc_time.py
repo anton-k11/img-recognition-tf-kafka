@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import re
 import logging
 import matplotlib.pyplot as plt
@@ -28,9 +29,9 @@ x = []
 y = []
 
 for line in container_logs.splitlines():
-  if "Delivered" in line:
+  if "Payload:" in line:
     temp_x = re.findall(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}', line)[0]
-    temp_y = re.findall(r'Delivered in (\d*) ms.', line)[0]
+    temp_y = re.findall(r'\'elapsed\': (\d*)\}', line)[0]
     date = parser.parse(temp_x)
 
     logging.debug(f'x is {temp_x}, y is {temp_y}, date is {date}')
@@ -44,8 +45,12 @@ date_form = DateFormatter("%H:%M:%S")
 ax.plot(x, y)
 ax.xaxis.set_major_formatter(date_form)
 ax.fill_between(x, y)
-ax.set_ylim(ymin=0)
-plt.title("Time Taken by Process")
+ax.set_ylim(ymin=50, ymax=350)
+#ax.set_xlim(datetime.now() - timedelta(hours=3, minutes=10))
+ax.set_xbound(datetime.now() - timedelta(hours=3, minutes=10), datetime.now() - timedelta(hours=2, minutes=59, seconds=30))
+plt.title("Time Taken by TF Process")
 plt.xlabel("Timestamp")
 plt.ylabel("Milliseconds")
+# mng = plt.get_current_fig_manager()
+# mng.resize(*mng.window.maxsize())
 plt.show()
